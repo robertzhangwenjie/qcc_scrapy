@@ -1,0 +1,4 @@
+.idea
+images
+*.xml
+__pycache__
