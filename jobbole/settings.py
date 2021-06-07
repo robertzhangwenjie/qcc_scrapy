@@ -68,10 +68,13 @@ ROBOTSTXT_OBEY = False
 ITEM_PIPELINES = {
    'jobbole.pipelines.JobbolePipeline': 300,
    'jobbole.pipelines.JoboleImagesPipeline': 301,
+   'jobbole.pipelines.ArticleMysqlPipeline': 302,
+   # 'jobbole.pipelines.CsvPrintPipeline': 302,
 }
 IMAGES_URLS_FIELD = 'img_url'
 IMAGES_RESULT_FIELD = 'img_url'
 IMAGES_STORE = os.path.join(PROJECT_DIR,'images')
+
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -93,3 +96,9 @@ IMAGES_STORE = os.path.join(PROJECT_DIR,'images')
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+# mysql config
+MYSQL_HOST="www.robertzwj.com"
+MYSQL_USER="robert"
+MYSQL_PASSWORD="123456"
+MYSQL_DB="scrapy"

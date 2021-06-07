@@ -1,3 +1,5 @@
+import datetime
+import logging
 import sys
 
 import scrapy
@@ -36,7 +38,7 @@ class ArticleSpider(scrapy.Spider):
 
         # 获取下一页的url，然后交给scrapy下载，并调用self.parse对当前url进行处理
         next_url = response.css('div#page > div a.a1:last-child::attr(href)')
-        if next_url:
+        if next_url is not None and next_url != "javascript:;":
             yield from response.follow_all(next_url,self.parse)
 
     def parse_article(self, response):
@@ -71,11 +73,22 @@ class ArticleSpider(scrapy.Spider):
         img_url = response.meta.get("img","")
 
         article_item["title"] = title
+        try:
+            create_date = datetime.datetime.strptime(create_date,"%Y-%m-%d %H:%M:%S").date()
+        except Exception as e:
+            self.log(f'create_time convert to date failed:{e}',level=logging.WARNING)
+            create_date = datetime.date.today()
         article_item["create_date"] = create_date
+
+        if l:=len(tags) > 1:
+            tags = ",".join(tags)
+        elif l == 1:
+            tags = tags[0]
+        else:
+            tags = ""
         article_item["tags"] = tags
         article_item["img_url"] = [img_url]
         article_item["content"] = content
         article_item["url"] = article_url
-        self.log(f'article_item:{article_item}')
         yield article_item
 

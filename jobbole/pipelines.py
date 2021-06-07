@@ -5,8 +5,16 @@
 
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
+import codecs
+import json
+import logging
+
+import pymysql as pymysql
+from scrapy.exporters import CsvItemExporter
 from scrapy.pipelines.images import ImagesPipeline
+from twisted.enterprise import adbapi
+
+
 class JobbolePipeline:
 
     def process_item(self, item, spider):
@@ -42,6 +50,61 @@ class JoboleImagesPipeline(ImagesPipeline):
             }
         :return:
         '''
-        from scrapy.pipelines.media import MediaPipeline
-        print(results,item,info.__dict__)
+
+        item[self.images_result_field] = [ result.get('path') for ok,result in results if ok ]
+
         return item
+
+class CsvPrintPipeline(object):
+
+    def open_spider(self, spider):
+        self.file = open("spider.csv", "wb+")
+        self.exporter = CsvItemExporter(self.file,encoding='utf-8-sig')
+        self.exporter.start_exporting()
+
+    def process_item(self, item, spider):
+        self.exporter.export_item(item)
+        return item
+
+    def close_spider(self, spider):
+        self.exporter.finish_exporting()
+        self.file.close()
+
+class ArticleMysqlPipeline:
+
+    def __init__(self,pool):
+        self.pool = pool
+
+    @classmethod
+    def from_crawler(cls,crawler):
+        adbparams = dict(
+            host=crawler.settings['MYSQL_HOST'],
+            db=crawler.settings['MYSQL_DB'],
+            user=crawler.settings['MYSQL_USER'],
+            password=crawler.settings['MYSQL_PASSWORD'],
+            cursorclass = pymysql.cursors.DictCursor
+        )
+
+        # 初始化数据库连接池
+        dbpool = adbapi.ConnectionPool('pymysql',**adbparams)
+        return cls(dbpool)
+
+    def process_item(self,item,spider):
+        # 执行异步操作，指定异步函数为self.insert，传递的数据为item
+        # 调用self.insert时传入的第一个参数为cursor，第二个为item
+        query = self.pool.runInteraction(self.insert,item)
+        # 添加异常处理，指定异常处理函数,会将异常传入
+        query.addErrback(self.handle_error)
+
+    def insert(self,cursor,item):
+        insert_sql = '''
+        insert into article_details(title,create_date,tags,img_url,content,url) values (%s,%s,%s,%s,%s,%s)
+        '''
+        data=(item['title'],item['create_date'],item['tags'],item['img_url'],item['content'],item['url'])
+        # twisted 会自动帮我们commit，不需要显式commit
+        cursor.execute(insert_sql,data)
+
+    def handle_error(self,err):
+        if err:
+            logging.basicConfig()
+            logging.error(f"insert data to mysql failed with err:{err}")
