@@ -3,14 +3,13 @@ import logging
 import sys
 
 import scrapy
-
-from jobbole.items import JobboleArticleItem
+from jobbole.items import JobboleArticleItem,ArticleItemLoader
 
 class ArticleSpider(scrapy.Spider):
     name = 'article'
     allowed_domains = ['blog.jobbole.com','www.jobbole.com']
     # start_urls = ['http://blog.jobbole.com/caijing/cjpl/']
-    start_urls = ['http://www.jobbole.com']
+    start_urls = ['http://blog.jobbole.com']
 
     count = 0
     def start_requests(self):
@@ -55,40 +54,51 @@ class ArticleSpider(scrapy.Spider):
 
         # 文章标题
         title_xpath = '//div[@class="article-head"]/h1[@class="title"]/text()'
-        title = response.xpath(title_xpath).get()
+        # title = response.xpath(title_xpath).get()
 
         # 创建时间
         create_date_xpath = '//div[@class="article-head"]/div[@class="about"]/div[@class="date"]/span[1]/text()'
-        create_date = response.xpath(create_date_xpath).get()
+        # create_date = response.xpath(create_date_xpath).get()
 
         # 正文内容
         content_xpath='//div[@class="article-main"]'
-        content=response.xpath(content_xpath).get()
+        # content=response.xpath(content_xpath).get()
 
         # 文章标签
         tag_xpath='//div[@class="word"]/a/@title'
-        tags = response.xpath(tag_xpath).getall()
+        # tags = response.xpath(tag_xpath).getall()
 
         # 文章img
         img_url = response.meta.get("img","")
 
-        article_item["title"] = title
-        try:
-            create_date = datetime.datetime.strptime(create_date,"%Y-%m-%d %H:%M:%S").date()
-        except Exception as e:
-            self.log(f'create_time convert to date failed:{e}',level=logging.WARNING)
-            create_date = datetime.date.today()
-        article_item["create_date"] = create_date
+        # article_item["title"] = title
+        # try:
+        #     create_date = datetime.datetime.strptime(create_date,"%Y-%m-%d %H:%M:%S").date()
+        # except Exception as e:
+        #     self.log(f'create_time convert to date failed:{e}',level=logging.WARNING)
+        #     create_date = datetime.date.today()
+        # article_item["create_date"] = create_date
 
-        if l:=len(tags) > 1:
-            tags = ",".join(tags)
-        elif l == 1:
-            tags = tags[0]
-        else:
-            tags = ""
-        article_item["tags"] = tags
-        article_item["img_url"] = [img_url]
-        article_item["content"] = content
-        article_item["url"] = article_url
-        yield article_item
+        # if l:=len(tags) > 1:
+        #     tags = ",".join(tags)
+        # elif l == 1:
+        #     tags = tags[0]
+        # else:
+        #     tags = ""
+        # article_item["tags"] = tags
+        # article_item["img_url"] = [img_url]
+        # article_item["content"] = content
+        # article_item["url"] = article_url
+        # yield article_item
+
+        article_itemloader = ArticleItemLoader(item=JobboleArticleItem(),response=response)
+        article_itemloader.add_xpath('title',title_xpath)
+        article_itemloader.add_xpath('title',create_date_xpath)
+        article_itemloader.add_xpath('create_date',create_date_xpath)
+        article_itemloader.add_xpath('content',content_xpath)
+        article_itemloader.add_xpath('tags',tag_xpath)
+        article_itemloader.add_value('img_urls',img_url)
+        article_itemloader.add_value('url',article_url)
+
+        yield article_itemloader.load_item()
 

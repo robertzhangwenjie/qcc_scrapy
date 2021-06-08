@@ -69,10 +69,10 @@ ITEM_PIPELINES = {
    'jobbole.pipelines.JobbolePipeline': 300,
    'jobbole.pipelines.JoboleImagesPipeline': 301,
    'jobbole.pipelines.ArticleMysqlPipeline': 302,
-   # 'jobbole.pipelines.CsvPrintPipeline': 302,
+   # 'jobbole.pipelines.ArticleCsvPipeline': 302,
 }
-IMAGES_URLS_FIELD = 'img_url'
-IMAGES_RESULT_FIELD = 'img_url'
+IMAGES_URLS_FIELD = 'img_urls'
+IMAGES_RESULT_FIELD = 'img_urls'
 IMAGES_STORE = os.path.join(PROJECT_DIR,'images')
 
 

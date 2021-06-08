@@ -1,4 +1,3 @@
-import datetime
 import os,sys
 
 from scrapy.cmdline import execute

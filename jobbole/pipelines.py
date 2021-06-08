@@ -10,9 +10,11 @@ import json
 import logging
 
 import pymysql as pymysql
+import scrapy.exporters
 from scrapy.exporters import CsvItemExporter
 from scrapy.pipelines.images import ImagesPipeline
 from twisted.enterprise import adbapi
+from jobbole.utils.common import join
 
 
 class JobbolePipeline:
@@ -55,20 +57,28 @@ class JoboleImagesPipeline(ImagesPipeline):
 
         return item
 
-class CsvPrintPipeline(object):
 
-    def open_spider(self, spider):
-        self.file = open("spider.csv", "wb+")
-        self.exporter = CsvItemExporter(self.file,encoding='utf-8-sig')
+class ArticleCsvPipeline:
+    def __init__(self,path):
+        self.path = path
+
+    @classmethod
+    def from_crawler(cls,crawler):
+        return cls(path=crawler.settings["CSV_FILE_PATH"])
+
+    def open_spider(self,spider):
+        self.file = open(self.path,'wb+')
+        self.exporter = scrapy.exporters.CsvItemExporter(file=self.file,encoding='utf-8-sig')
         self.exporter.start_exporting()
 
-    def process_item(self, item, spider):
+    def process_item(self,item,spider):
         self.exporter.export_item(item)
         return item
 
-    def close_spider(self, spider):
+    def close_spider(self,spider):
         self.exporter.finish_exporting()
         self.file.close()
+
 
 class ArticleMysqlPipeline:
 
@@ -100,7 +110,7 @@ class ArticleMysqlPipeline:
         insert_sql = '''
         insert into article_details(title,create_date,tags,img_url,content,url) values (%s,%s,%s,%s,%s,%s)
         '''
-        data=(item['title'],item['create_date'],item['tags'],item['img_url'],item['content'],item['url'])
+        data=(item['title'], item['create_date'], item['tags'], item['img_urls'], item['content'], item['url'])
         # twisted 会自动帮我们commit，不需要显式commit
         cursor.execute(insert_sql,data)
 
