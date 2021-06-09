@@ -9,9 +9,8 @@ class ArticleSpider(scrapy.Spider):
     name = 'article'
     allowed_domains = ['blog.jobbole.com','www.jobbole.com']
     # start_urls = ['http://blog.jobbole.com/caijing/cjpl/']
-    start_urls = ['http://blog.jobbole.com']
+    start_urls = ['http://www.jobbole.com']
 
-    count = 0
     def start_requests(self):
         for start_url in self.start_urls:
             yield scrapy.Request(start_url,callback=self.parse_topic)
@@ -36,9 +35,9 @@ class ArticleSpider(scrapy.Spider):
             yield response.follow(article_url,callback=self.parse_article,meta={"img":article_image_url})
 
         # 获取下一页的url，然后交给scrapy下载，并调用self.parse对当前url进行处理
-        next_url = response.css('div#page > div a.a1:last-child::attr(href)')
-        if next_url is not None and next_url != "javascript:;":
-            yield from response.follow_all(next_url,self.parse)
+        next_url = response.css('div#page > div a.a1:last-child::attr(href)').get()
+        if next_url and next_url != "javascript:;":
+            yield response.follow(next_url,self.parse)
 
     def parse_article(self, response):
         '''
@@ -93,7 +92,6 @@ class ArticleSpider(scrapy.Spider):
 
         article_itemloader = ArticleItemLoader(item=JobboleArticleItem(),response=response)
         article_itemloader.add_xpath('title',title_xpath)
-        article_itemloader.add_xpath('title',create_date_xpath)
         article_itemloader.add_xpath('create_date',create_date_xpath)
         article_itemloader.add_xpath('content',content_xpath)
         article_itemloader.add_xpath('tags',tag_xpath)

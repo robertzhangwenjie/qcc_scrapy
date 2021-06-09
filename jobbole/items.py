@@ -21,6 +21,8 @@ class ArticleItemLoader(ItemLoader):
 
     # img_urls必须是list，因此不能使用默认的processor
     img_urls_out = itemloaders.processors.Identity()
+    # tags需要将值使用","链接
+    tags_out = Join(",")
 
 class JobboleArticleItem(scrapy.Item):
     title = scrapy.Field()

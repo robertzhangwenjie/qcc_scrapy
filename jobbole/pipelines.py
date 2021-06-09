@@ -11,6 +11,7 @@ import logging
 
 import pymysql as pymysql
 import scrapy.exporters
+from itemadapter import ItemAdapter
 from scrapy.exporters import CsvItemExporter
 from scrapy.pipelines.images import ImagesPipeline
 from twisted.enterprise import adbapi
@@ -53,7 +54,7 @@ class JoboleImagesPipeline(ImagesPipeline):
         :return:
         '''
 
-        item[self.images_result_field] = [ result.get('path') for ok,result in results if ok ]
+        item[self.images_result_field] =[ result.get('path') for ok,result in results if ok ]
 
         return item
 
@@ -110,7 +111,7 @@ class ArticleMysqlPipeline:
         insert_sql = '''
         insert into article_details(title,create_date,tags,img_url,content,url) values (%s,%s,%s,%s,%s,%s)
         '''
-        data=(item['title'], item['create_date'], item['tags'], item['img_urls'], item['content'], item['url'])
+        data=(item['title'], item['create_date'], item.get('tags','null'),  ",".join(item['img_urls']), item['content'], item['url'])
         # twisted 会自动帮我们commit，不需要显式commit
         cursor.execute(insert_sql,data)
 
