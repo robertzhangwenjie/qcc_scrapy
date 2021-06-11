@@ -26,6 +26,7 @@ class JobbolePipeline:
 
 class JoboleImagesPipeline(ImagesPipeline):
 
+
     def item_completed(self, results, item, info):
         '''
         默认的item_complete是将结果保存在字段item[IMAGES_RESULT_FIELD]
@@ -54,7 +55,8 @@ class JoboleImagesPipeline(ImagesPipeline):
         :return:
         '''
 
-        item[self.images_result_field] =[ result.get('path') for ok,result in results if ok ]
+        if item.get(self.images_result_field,None):
+            item[self.images_result_field] =[ result.get('path') for ok,result in results if ok ]
 
         return item
 
@@ -108,14 +110,17 @@ class ArticleMysqlPipeline:
         query.addErrback(self.handle_error)
 
     def insert(self,cursor,item):
-        insert_sql = '''
-        insert into article_details(title,create_date,tags,img_url,content,url) values (%s,%s,%s,%s,%s,%s)
         '''
-        data=(item['title'], item['create_date'], item.get('tags','null'),  ",".join(item['img_urls']), item['content'], item['url'])
+        实现不同item的数据写入，需要在item中定义一个函数，返回插入的sql
+        :param cursor:
+        :param item:
+        :return:
+        '''
+        sql,data = item.get_insert_sql()
         # twisted 会自动帮我们commit，不需要显式commit
-        cursor.execute(insert_sql,data)
+        cursor.execute(sql,data)
 
-    def handle_error(self,err):
-        if err:
+    def handle_error(self,failure):
+        if failure:
             logging.basicConfig()
-            logging.error(f"insert data to mysql failed with err:{err}")
+            logging.error(f"insert data into mysql failed:{failure}")
