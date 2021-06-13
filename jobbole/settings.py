@@ -53,9 +53,14 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'jobbole.middlewares.JobboleDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+   'jobbole.middlewares.RandomUserAgentMiddleware': 543,
+   'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+}
+
+# useragent type, the value can be one of the following, default random
+# random,ie,chrome,firefox,safari,opera
+UA_TYPE = 'random'
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
