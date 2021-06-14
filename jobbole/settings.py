@@ -106,3 +106,8 @@ MYSQL_HOST="www.robertzwj.com"
 MYSQL_USER="robert"
 MYSQL_PASSWORD="123456"
 MYSQL_DB="scrapy"
+
+
+# webdriver
+Webdriver_Path = os.path.join(os.path.dirname(PROJECT_DIR),'webdrivers')
+ChromeDriver = os.path.join(Webdriver_Path,'chromedriver.exe')
