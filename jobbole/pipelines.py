@@ -8,6 +8,7 @@
 import codecs
 import json
 import logging
+import os.path
 
 import pymysql as pymysql
 import scrapy.exporters
@@ -15,13 +16,7 @@ from itemadapter import ItemAdapter
 from scrapy.exporters import CsvItemExporter
 from scrapy.pipelines.images import ImagesPipeline
 from twisted.enterprise import adbapi
-from jobbole.utils.common import join
 
-
-class JobbolePipeline:
-
-    def process_item(self, item, spider):
-        return item
 
 
 class JoboleImagesPipeline(ImagesPipeline):
@@ -61,21 +56,23 @@ class JoboleImagesPipeline(ImagesPipeline):
         return item
 
 
-class ArticleCsvPipeline:
+class QccCsvPipeline:
     def __init__(self,path):
         self.path = path
 
     @classmethod
     def from_crawler(cls,crawler):
-        return cls(path=crawler.settings["CSV_FILE_PATH"])
+        return cls(path=crawler.settings["COMPANY_RESULT_PATH_DIR"])
 
     def open_spider(self,spider):
-        self.file = open(self.path,'wb+')
-        self.exporter = scrapy.exporters.CsvItemExporter(file=self.file,encoding='utf-8-sig')
+        self.file = open(os.path.join(self.path,'result.csv'),'wb+')
+        self.exporter = scrapy.exporters.CsvItemExporter(file=self.file,encoding='utf-8-sig',
+                                                         fields_to_export=['name','phone','leader','registry_capital','registry_date','addr'])
         self.exporter.start_exporting()
 
     def process_item(self,item,spider):
-        self.exporter.export_item(item)
+        if spider.name == 'qcc':
+            self.exporter.export_item(item)
         return item
 
     def close_spider(self,spider):
@@ -83,7 +80,7 @@ class ArticleCsvPipeline:
         self.file.close()
 
 
-class ArticleMysqlPipeline:
+class MysqlPipeline:
 
     def __init__(self,pool):
         self.pool = pool
@@ -103,11 +100,14 @@ class ArticleMysqlPipeline:
         return cls(dbpool)
 
     def process_item(self,item,spider):
-        # 执行异步操作，指定异步函数为self.insert，传递的数据为item
-        # 调用self.insert时传入的第一个参数为cursor，第二个为item
-        query = self.pool.runInteraction(self.insert,item)
-        # 添加异常处理，指定异常处理函数,会将异常传入
-        query.addErrback(self.handle_error)
+        if hasattr(item,'get_insert_sql'):
+
+            # 执行异步操作，指定异步函数为self.insert，传递的数据为item
+            # 调用self.insert时传入的第一个参数为cursor，第二个为item
+            query = self.pool.runInteraction(self.insert,item)
+            # 添加异常处理，指定异常处理函数,会将异常传入
+            query.addErrback(self.handle_error)
+        return item
 
     def insert(self,cursor,item):
         '''

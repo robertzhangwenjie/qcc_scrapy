@@ -10,7 +10,7 @@ from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, Join,Compose,MapCompose
 from w3lib.html import remove_tags
 
-from jobbole.utils.common import date_from_datetimestr,join
+from jobbole.utils.common import date_from_datetimestr
 
 class JobboleItem(scrapy.Item):
     # define the fields for your item here like:
@@ -88,6 +88,19 @@ class LagouPositionItem(scrapy.Item):
             self.get('gmt_update'),
         )
         return sql,data
+
+
+class QccComanyItemLoader(ItemLoader):
+
+    default_output_processor = TakeFirst()
+
+class QccCompanyItem(scrapy.Item):
+    name = scrapy.Field()
+    leader = scrapy.Field()
+    registry_capital = scrapy.Field()
+    registry_date = scrapy.Field()
+    phone = scrapy.Field()
+    addr = scrapy.Field()
 
 
 

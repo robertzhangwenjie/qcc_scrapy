@@ -68,8 +68,7 @@ class Proxy66IPCrawler:
             ip = proxy.css('td::text').extract()[0]
             port = proxy.css('td::text').extract()[1]
 
-            proxy_addr = f'http://{ip}:{port}'
-            return proxy_addr
+            return ip,port
         except Exception as err:
             print(err)
             return None
@@ -77,8 +76,7 @@ class Proxy66IPCrawler:
     def _insert_mysql(self):
 
         query = '''
-        insert into proxy_ip(proxy_addr) values (%s) 
-        on duplicate key update proxy_addr = values(proxy_addr)
+        insert into proxy(ip,port) values (%s,%s) 
         '''
         self.cursor.executemany(query,self.proxy_addrs)
         self.conn.commit()

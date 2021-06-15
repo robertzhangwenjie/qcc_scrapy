@@ -55,7 +55,11 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    'jobbole.middlewares.RandomUserAgentMiddleware': 543,
+   # 'jobbole.middlewares.RandomProxyMiddleware': 544,
+   'jobbole.middlewares.RandomCookieMiddleware': 545,
+   'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+
 }
 
 # useragent type, the value can be one of the following, default random
@@ -71,10 +75,9 @@ UA_TYPE = 'random'
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'jobbole.pipelines.JobbolePipeline': 300,
    'jobbole.pipelines.JoboleImagesPipeline': 301,
-   'jobbole.pipelines.ArticleMysqlPipeline': 302,
-   # 'jobbole.pipelines.ArticleCsvPipeline': 302,
+   'jobbole.pipelines.MysqlPipeline': 302,
+   'jobbole.pipelines.QccCsvPipeline': 303,
 }
 IMAGES_URLS_FIELD = 'img_urls'
 IMAGES_RESULT_FIELD = 'img_urls'
@@ -111,3 +114,7 @@ MYSQL_DB="scrapy"
 # webdriver
 Webdriver_Path = os.path.join(os.path.dirname(PROJECT_DIR),'webdrivers')
 ChromeDriver = os.path.join(Webdriver_Path,'chromedriver.exe')
+
+# qcc excel
+COMPANY_EXCEL_PATH_DIR=os.path.join(PROJECT_DIR,'qcc','excel')
+COMPANY_RESULT_PATH_DIR=os.path.join(PROJECT_DIR,'qcc','result')

@@ -2,8 +2,13 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import re
+
 import fake_useragent
 from scrapy import signals
+from scrapy.exceptions import IgnoreRequest
+
+from jobbole.qcc.cookie import QccCookie, str_cookie_from_dict
 from jobbole.utils.proxy_util import ProxyUtil
 
 # useful for handling different item types with a single interface
@@ -145,7 +150,7 @@ class RandomUserAgentMiddleware:
         pass
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info('Spider opened: %s' % self.__class__.__name__)
 
 class RandomProxyMiddleware:
 
@@ -160,7 +165,9 @@ class RandomProxyMiddleware:
         return s
 
     def process_request(self, request, spider):
-        request.meta['proxy'] = self.proxy.get_random_proxy()
+        ip,port = self.proxy.get_random_proxy()
+        proxy = f'http://{ip}:{port}'
+        request.meta['proxy'] = proxy
         return None
 
     def process_response(self, request, response, spider):
@@ -183,4 +190,40 @@ class RandomProxyMiddleware:
         pass
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info('Spider opened: %s' % self.__class__.__name__)
+
+class RandomCookieMiddleware:
+
+    def __init__(self):
+        self.qc = QccCookie()
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        # This method is used by Scrapy to create your spiders.
+        s = cls()
+        crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
+        return s
+
+    def process_request(self, request, spider):
+        if spider.name != "qcc":
+            return None
+        # 如果跳转到验证页面，则证明cookie失效了，需要删除,且丢掉该请求
+        if re.match(r'https://www.qcc.com/index_verify',request.url) is not None:
+            self.qc.delete_cookie(str_cookie_from_dict(request.cookies))
+            raise IgnoreRequest('cookie is invalid')
+        cookies = self.qc.dict_cookie_from_str(self.qc.get_cookie())
+        request.cookies = cookies
+
+
+
+    def process_response(self, request, response, spider):
+        return response
+
+    def process_exception(self, request, exception, spider):
+        pass
+
+    def spider_opened(self, spider):
+        spider.logger.info('Spider opened: %s' % self.__class__.__name__)
+
+if __name__ == '__main__':
+    pass

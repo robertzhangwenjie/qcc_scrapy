@@ -27,7 +27,6 @@ def is_element_exist(driver,element):
     try:
         ret = driver.find_element(*element)
     except (NoSuchElementException) as err:
-        print(err)
         return False
     if ret:
         return ret
@@ -38,7 +37,6 @@ def is_element_display(driver,element):
     try:
         ret = driver.find_element(*element)
     except (NoSuchElementException) as err:
-        print(err)
         return False
     if ret.is_displayed():
         return True
@@ -59,11 +57,8 @@ def scroll_btn(driver,btn_selector,offset):
     action.move_by_offset(offset, 0).perform()
 
 
-def join(value):
-    res = Join(",")(value)
-    if res:
-        return res
-    else:
-        return ""
+
+
+
 if __name__ == '__main__':
     pass
