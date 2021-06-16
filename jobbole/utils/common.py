@@ -22,6 +22,10 @@ def date_from_datetimestr(value):
     return datetime.datetime.strptime(value,"%Y-%m-%d %H:%M:%S").date()
 
 
+# 删除空格
+def strip_str(value: str):
+    return value.strip()
+
 # 判断元素是否存在,存在就返回该元素
 def is_element_exist(driver,element):
     try:

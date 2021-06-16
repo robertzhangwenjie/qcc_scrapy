@@ -139,7 +139,7 @@ class QccCookie:
         '''
         if self.cursor.execute(query) == 0:
             print("no cookie available,starting get cookie by qcc selenium")
-            cookie = get_cookie_str('18665342227','Zhu19910214')
+            cookie = get_cookie_str(settings.QCC_ACCOUNT['username'],settings.QCC_ACCOUNT['password'])
             self.put_cookie(cookie)
             return cookie
 

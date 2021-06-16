@@ -118,3 +118,6 @@ ChromeDriver = os.path.join(Webdriver_Path,'chromedriver.exe')
 # qcc excel
 COMPANY_EXCEL_PATH_DIR=os.path.join(PROJECT_DIR,'qcc','excel')
 COMPANY_RESULT_PATH_DIR=os.path.join(PROJECT_DIR,'qcc','result')
+
+# qcc账号
+QCC_ACCOUNT=  {'username': '13995553697', 'password': 'zhangwenjie64656'}

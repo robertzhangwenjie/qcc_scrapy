@@ -67,7 +67,7 @@ class QccCsvPipeline:
     def open_spider(self,spider):
         self.file = open(os.path.join(self.path,'result.csv'),'wb+')
         self.exporter = scrapy.exporters.CsvItemExporter(file=self.file,encoding='utf-8-sig',
-                                                         fields_to_export=['name','phone','leader','registry_capital','registry_date','addr'])
+                                                         fields_to_export=['name','leader','phone','industry','registry_capital','registry_date','addr','ip','scope'])
         self.exporter.start_exporting()
 
     def process_item(self,item,spider):
