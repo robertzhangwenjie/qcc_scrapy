@@ -209,8 +209,10 @@ class RandomCookieMiddleware:
             return None
         # 如果跳转到验证页面，则证明cookie失效了，需要删除,且丢掉该请求
         if re.match(r'https://www.qcc.com/index_verify',request.url) is not None:
-            self.qc.delete_cookie(str_cookie_from_dict(request.cookies))
-            raise IgnoreRequest('cookie is invalid')
+            cookie_str = str_cookie_from_dict(request.cookies)
+            phone = self.qc.get_phone_by_cookie(cookie_str)
+            self.qc.delete_cookie(cookie_str)
+            raise IgnoreRequest(f'{phone} is restricted query')
         cookies = self.qc.dict_cookie_from_str(self.qc.get_random_cookie())
         request.cookies = cookies
 

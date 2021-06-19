@@ -27,7 +27,7 @@ class QccSpider(scrapy.Spider):
     def start_requests(self):
 
         # 初始化企查查的cookie
-        QccCookie().init_cookies(settings.QCC_ACCOUNTS)
+        QccCookie().init_cookies()
         # 获取excel目录下所有excel的企业名称
         company_list = CompanyExcelHandler(excel_dir_pah=settings.COMPANY_EXCEL_PATH_DIR).get_company_names()
 
