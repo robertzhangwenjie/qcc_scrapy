@@ -109,4 +109,22 @@ class QccCompanyItem(scrapy.Item):
     ip = scrapy.Field()
 
 
+    def get_insert_sql(self):
+        query = '''
+        insert into qcc_company(name,leader,phone,addr,registry_date,registry_capital,scope,ip,industry)
+        values(%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        '''
+        data = (
+            self.get('name'),
+            self.get('leader'),
+            self.get('phone'),
+            self.get('addr'),
+            self.get('registry_date'),
+            self.get('registry_capital'),
+            self.get('scope'),
+            self.get('ip'),
+            self.get('industry'),
+        )
+        return query,data
+
 

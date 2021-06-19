@@ -211,7 +211,7 @@ class RandomCookieMiddleware:
         if re.match(r'https://www.qcc.com/index_verify',request.url) is not None:
             self.qc.delete_cookie(str_cookie_from_dict(request.cookies))
             raise IgnoreRequest('cookie is invalid')
-        cookies = self.qc.dict_cookie_from_str(self.qc.get_cookie())
+        cookies = self.qc.dict_cookie_from_str(self.qc.get_random_cookie())
         request.cookies = cookies
 
 

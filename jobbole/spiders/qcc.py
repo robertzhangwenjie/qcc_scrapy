@@ -1,10 +1,13 @@
 import logging
+import re
 
 import scrapy
 
+from jobbole import settings
 from jobbole.items import QccComanyItemLoader,QccCompanyItem
-from jobbole.qcc import cookie
-from jobbole.qcc.company import Company
+from jobbole.qcc.company_excel import CompanyExcelHandler
+from jobbole.qcc.cookie import Mysql,QccCookie
+
 
 
 class QccSpider(scrapy.Spider):
@@ -22,12 +25,30 @@ class QccSpider(scrapy.Spider):
 
 
     def start_requests(self):
-        # cookies= cookie.get_cookie(phone = '13995553697',password = 'zhangwenjie64656')
-        company_list = Company.new_compay().get_newest_excel_company()
 
-        for comany in company_list:
-            url = self.search_url + comany
-            yield scrapy.Request(url,callback=self.parse_company_url)
+        # 初始化企查查的cookie
+        QccCookie().init_cookies(settings.QCC_ACCOUNTS)
+        # 获取excel目录下所有excel的企业名称
+        company_list = CompanyExcelHandler(excel_dir_pah=settings.COMPANY_EXCEL_PATH_DIR).get_company_names()
+
+        company_cralwed = self.get_crawled_company()
+        for company in company_list:
+            if company not in company_cralwed:
+                url = self.search_url + company
+                yield scrapy.Request(url,callback=self.parse_company_url)
+
+    def get_crawled_company(self):
+
+        company_list = []
+        mysql = Mysql()
+        query = '''
+        select name from qcc_company
+        '''
+        mysql.cursor.execute(query)
+        company_tuples = mysql.cursor.fetchall()
+        for company_tuple in company_tuples:
+            company_list.append(company_tuple[0])
+        return company_list
 
 
     def parse_company_url(self,response):
@@ -36,29 +57,49 @@ class QccSpider(scrapy.Spider):
 
     def parse_detail(self, response):
 
+
+        # company_name = response.css('#company-top div.row.title.jk-tip > h1::text').get()
+        company_name = response.css('div.company-header  div.title > h1::text').get()
+        leader = response.css('span.max-150').xpath('string()').get()
+
+        registry_capital = response.css('#cominfo table.ntable  tr:nth-child(3) td:nth-child(2)::text').get()
+        registry_date = response.css('#cominfo table.ntable  tr:nth-child(2) td:last-child::text').get()
+        phone = response.css('span.phone-status + span::text').get()
+        addr = response.css('#cominfo table.ntable  tr:nth-child(9) td:nth-child(2) > a.text-dk::text').get()
+        industry = response.css('#cominfo table.ntable  tr:nth-child(6) td:nth-child(2)::text').get().strip()
+        scope = response.css('#cominfo table.ntable > tr:last-child > td:nth-child(2)::text').get()
+
+        company_base_info = {
+            "name": company_name,
+            "registry_capital": registry_capital,
+            "leader": leader,
+            "registry_date": registry_date,
+            "phone": phone,
+            "addr": addr,
+            "industry": industry,
+            "scope": scope
+        }
+        cassets_url = 'https://www.qcc.com/cassets/' + re.search(r'.*/(.*)\.html$',response.url).group(1) + '.html'
+        yield response.follow(cassets_url,meta={"company_base_info":company_base_info},callback=self.parse_cassets,dont_filter=True)
+
+    def parse_cassets(self,response):
         item_loader = QccComanyItemLoader(QccCompanyItem(),response)
 
-        company_name = response.css('#company-top div.row.title.jk-tip > h1::text').get()
-        leader = response.css('div.dcontent span.text-primary span.text-primary')[0].xpath('string()').get()
-        registry_capital = response.css('#Cominfo table.ntable  tr:nth-child(3) td:nth-child(2)::text').get()
-        registry_date = response.css('#Cominfo table.ntable  tr:nth-child(2) td:last-child::text').get()
-        phone = response.css('div.row span.phone-status + span::text').get()
-        addr = response.css('div.dcontent > div.row:nth-child(3) > span.cvlu a:nth-child(1)::attr(title)').get()
-        industry = response.css('#Cominfo table.ntable  tr:nth-child(6) td:nth-child(2)::text').get()
-        scope = response.css('#Cominfo table.ntable  tr:last-child td:nth-child(2)::text').get()
-        ip_sb = response.css('div.company-nav div.company-nav-tab:nth-child(6) div.company-nav-items span:nth-child(1)::text')[0].get().strip()
-        ip_zl = response.css('div.company-nav div.company-nav-tab:nth-child(6) div.company-nav-items span:nth-child(1)::text')[2].get().strip()
-        ip_rz = response.css('div.company-nav div.company-nav-tab:nth-child(6) div.company-nav-items span:nth-child(1)::text')[5].get().strip()
-        ip = f"商标信息:{ip_sb},专利信息:{ip_zl},软件著作:{ip_rz}"
+        ip_sb = response.css('div.data-assets > div.sub-nav > a.item:nth-child(1)::text').get().strip()
+        ip_zl = response.css('div.data-assets > div.sub-nav > a.item:nth-child(2)::text').get().strip()
+        ip_rz = response.css('div.data-assets > div.sub-nav > a.item:nth-child(5)::text').get().strip()
+        ip = f"{ip_sb},{ip_zl},{ip_rz}"
 
-        item_loader.add_value('name', company_name)
-        item_loader.add_value('leader',leader)
-        item_loader.add_value('registry_capital',registry_capital)
-        item_loader.add_value('phone',phone)
-        item_loader.add_value('registry_date',registry_date)
-        item_loader.add_value('addr',addr)
-        item_loader.add_value('industry',industry)
-        item_loader.add_value('scope',scope)
+
+        company_base_info = response.meta['company_base_info']
+        item_loader.add_value('name', company_base_info['name'])
+        item_loader.add_value('leader',company_base_info['leader'])
+        item_loader.add_value('registry_capital',company_base_info['registry_capital'])
+        item_loader.add_value('phone',company_base_info['phone'])
+        item_loader.add_value('registry_date',company_base_info['registry_date'])
+        item_loader.add_value('addr',company_base_info['addr'])
+        item_loader.add_value('industry',company_base_info['industry'])
+        item_loader.add_value('scope',company_base_info['scope'])
         item_loader.add_value('ip',ip)
         item = item_loader.load_item()
         yield item
