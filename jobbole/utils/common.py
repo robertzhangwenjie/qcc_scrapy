@@ -59,6 +59,8 @@ def scroll_btn(driver,btn_selector,offset):
     action.click_and_hold(button).perform()
     action.reset_actions()
     action.move_by_offset(offset, 0).perform()
+    # 模拟松手
+    # ActionChains(driver).release().perform()
 
 
 

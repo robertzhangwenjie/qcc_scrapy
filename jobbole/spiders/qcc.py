@@ -6,7 +6,7 @@ import scrapy
 from jobbole import settings
 from jobbole.items import QccComanyItemLoader,QccCompanyItem
 from jobbole.qcc.company_excel import CompanyExcelHandler
-from jobbole.qcc.cookie import Mysql,QccCookie
+from jobbole.qcc.cookie import MysqlConnector,QccCookie
 
 
 
@@ -40,7 +40,7 @@ class QccSpider(scrapy.Spider):
     def get_crawled_company(self):
 
         company_list = []
-        mysql = Mysql()
+        mysql = MysqlConnector()
         query = '''
         select name from qcc_company
         '''
