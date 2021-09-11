@@ -119,12 +119,12 @@ COMPANY_RESULT_PATH_DIR = os.path.join(PROJECT_DIR, 'qcc', 'result')
 # qcc账号
 QCC_ACCOUNTS = [
     {
-        'phone': '13995553697',
-        'password': 'zhangwenjie64656'
+        'phone': '1xxxxxx',
+        'password': 'xxxxx'
     },
     {
-        'phone': '17771786590',
-        'password': 'zhangwenjie64656'
+        'phone': 'xxxxx',
+        'password': 'xxxxx'
     },
 
 ]
